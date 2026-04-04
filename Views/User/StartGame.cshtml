@@ -1,0 +1,11 @@
+﻿@{
+    ViewData["Title"] = "Start Game";
+}
+
+<h2>Start Game</h2>
+
+<p>Welcome, @ViewBag.Username!</p>
+<p>This page is restricted to logged in users only.</p>
+<p>This page will later let the user begin Minesweeper.</p>
+
+<a asp-controller="User" asp-action="Logout" class="btn btn-danger">Logout</a>
