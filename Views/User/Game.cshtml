@@ -1,0 +1,81 @@
+﻿@model MinesweeperApp.Models.GameBoardViewModel
+
+@{
+    ViewData["Title"] = "Game Board";
+}
+
+<h1>Minesweeper Board</h1>
+<h4>Game Setup</h4>
+<hr />
+
+<!-- Show the selected game settings -->
+<div class="alert alert-info">
+    <strong>Board Size:</strong> @Model.BoardSize x @Model.BoardSize <br />
+    <strong>Difficulty:</strong> @Model.Difficulty
+</div>
+
+@if (Model.ClickedRow != null && Model.ClickedCol != null)
+{
+    <div class="alert alert-secondary">
+        <strong>Last Cell Clicked:</strong>
+        Row @Model.ClickedRow, Column @Model.ClickedCol
+    </div>
+}
+
+<!--
+    
+    Each button is rendered in a grid, and each click posts back to the controller.
+    The current board state is stored in the ViewModel.
+-->
+<div style="display:grid; grid-template-columns: repeat(@Model.BoardSize, 60px); gap: 5px; margin-top: 20px;">
+    @for (int row = 0; row < Model.BoardSize; row++)
+
+    {
+        @for (int col = 0; col < Model.BoardSize; col++)
+        {
+            int index = (row * Model.BoardSize) + col;
+
+            <form asp-action="HandleCellClick" method="post" style="margin:0;">
+                @Html.AntiForgeryToken()
+
+                <!-- Preserve game settings -->
+                <input type="hidden" name="boardSize" value="@Model.BoardSize" />
+                <input type="hidden" name="difficulty" value="@Model.Difficulty" />
+
+                <!-- Preserve board state -->
+                <input type="hidden" name="boardState" value="@Model.BoardState" />
+
+                <!-- Send row and column of clicked cell -->
+                <input type="hidden" name="row" value="@row" />
+                <input type="hidden" name="col" value="@col" />
+
+                <button type="submit"
+                        onmouseover="this.style.opacity=0.8"
+                        onmouseout="this.style.opacity=1"
+                        style="
+                    width:60px;
+                    height:60px;
+                    font-size:20px;
+                    font-weight:bold;
+                    background-color:@(Model.Cells[index] == "■" ? "#6c757d" : "#e9ecef");
+                    color:black;
+                    border:2px solid #495057;
+                    border-radius:6px;
+                    ">
+                    @Model.Cells[index]
+                </button>
+            </form>
+        }
+    }
+</div>
+<!-- Board grid ends here -->
+<!-- Test buttons go OUTSIDE the board grid -->
+<div class="mt-4">
+    <a asp-controller="User" asp-action="Win" asp-route-score="150" class="btn btn-success me-2">
+        Test Win Page
+    </a>
+
+    <a asp-controller="User" asp-action="Loss" class="btn btn-danger">
+        Test Loss Page
+    </a>
+</div>

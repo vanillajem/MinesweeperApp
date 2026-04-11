@@ -2,10 +2,47 @@
     ViewData["Title"] = "Start Game";
 }
 
-<h2>Start Game</h2>
+<h1>Start Game</h1>
+<h4>Minesweeper Setup</h4>
+<hr />
+@if (ViewBag.BoardSize != null && ViewBag.Difficulty != null)
+{
+    <div class="alert alert-info mt-3">
+        <strong>Game Settings Selected:</strong><br />
+        Board Size: @ViewBag.BoardSize <br />
+        Difficulty: @ViewBag.Difficulty
+    </div>
+}
 
-<p>Welcome, @ViewBag.Username!</p>
-<p>This page is restricted to logged in users only.</p>
-<p>This page will later let the user begin Minesweeper.</p>
+<!--
+    This form lets the player choose game settings before starting.
+    
+-->
+<form asp-action="StartNewGame" method="post">
+    @Html.AntiForgeryToken()
+    <div class="form-group mb-3">
+        <label for="boardSize" class="control-label">Board Size</label>
+        <select id="boardSize" name="boardSize" class="form-control">
+            <option value="5">5 x 5</option>
+            <option value="8" selected>8 x 8</option>
+            <option value="10">10 x 10</option>
+        </select>
+    </div>
 
-<a asp-controller="User" asp-action="Logout" class="btn btn-danger">Logout</a>
+    <div class="form-group mb-3">
+        <label for="difficulty" class="control-label">Difficulty</label>
+        <select id="difficulty" name="difficulty" class="form-control">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+    </div>
+
+    <!--
+        Submit button sends the selected settings to the controller.
+        
+    -->
+    <div class="form-group">
+        <input type="submit" value="Start New Game" class="btn btn-primary" />
+    </div>
+</form>

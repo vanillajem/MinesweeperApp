@@ -1,0 +1,19 @@
+﻿@{
+    ViewData["Title"] = "You Win";
+}
+
+<div class="text-center mt-5">
+    <h1 class="display-4 text-success">You Win!</h1>
+    <p class="lead">Congratulations, you cleared the board.</p>
+
+    @if (ViewBag.Score != null)
+    {
+        <div class="alert alert-success mt-3">
+            <strong>Score:</strong> @ViewBag.Score
+        </div>
+    }
+
+    <a asp-controller="User" asp-action="StartGame" class="btn btn-primary mt-3">
+        Play Again
+    </a>
+</div>
