@@ -23,6 +23,9 @@
         // Tracks which column was last clicked
         public int? ClickedCol { get; set; }
 
+        // The actual Board object that contains the game logic and state
+        public Board Board { get; set; }
+        
         // Default constructor
         public GameBoardViewModel()
         {
