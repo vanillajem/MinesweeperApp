@@ -14,5 +14,7 @@ namespace MinesweeperApp.Models
 
         // This will become the Users table in the database
         public DbSet<UserModel> Users { get; set; }
+        // This will become the GameScores table in the database
+        public DbSet<GameScore> GameScores { get; set; }
     }
 }
