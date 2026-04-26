@@ -8,7 +8,7 @@
 }
 
 <button class="cell-button"
-        data-flagged="false"
+        data-flagged="@(Model.Board.Grid[row][col].IsFlagged.ToString().ToLower())"
         id="cell-@row-@col"
         data-row="@row"
         data-col="@col"
