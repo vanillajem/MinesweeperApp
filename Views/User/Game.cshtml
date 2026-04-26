@@ -22,6 +22,11 @@
     </div>
 }
 
+@* Added by Angela: timestamp shows AJAX updates without full page reload *@
+<div id="timestamp" class="mb-3">
+    Last Updated: Not clicked yet
+</div>
+
 <!--
     
     Each button is rendered in a grid, and each click posts back to the controller.
@@ -30,40 +35,19 @@
 <div style="display:grid; grid-template-columns: repeat(@Model.BoardSize, 60px); gap: 5px; margin-top: 20px;">
     @for (int row = 0; row < Model.BoardSize; row++)
 
-    {
+    
         @for (int col = 0; col < Model.BoardSize; col++)
         {
-            int index = (row * Model.BoardSize) + col;
+         
+            @* Updated by Angela: sends row/column info to the cell partial. *@
+            ViewData["Row"] = row;
+            ViewData["Col"] = col;
 
-            <form asp-action="HandleCellClick" method="post" style="margin:0;">
-                @Html.AntiForgeryToken()
-
-                <!-- Preserve game settings -->
-                <input type="hidden" name="boardSize" value="@Model.BoardSize" />
-                <input type="hidden" name="difficulty" value="@Model.Difficulty" />
-
-                <!-- Send row and column of clicked cell -->
-                <input type="hidden" name="row" value="@row" />
-                <input type="hidden" name="col" value="@col" />
-
-                <button type="submit"
-                        onmouseover="this.style.opacity=0.8"
-                        onmouseout="this.style.opacity=1"
-                        style="
-                    width:60px;
-                    height:60px;
-                    font-size:20px;
-                    font-weight:bold;
-                    background-color:@(Model.Cells[index] == "■" ? "#6c757d" : "#e9ecef");
-                    color:black;
-                    border:2px solid #495057;
-                    border-radius:6px;
-                    ">
-                    @Model.Cells[index]
-                </button>
-            </form>
+            @* Updated by Angela: renders one cell partial so AJAX can replace one cell only. *@
+            <partial name="_CellPartial" model="Model" />
+        
         }
-    }
+    
 </div>
 <!-- Board grid ends here -->
 <!-- Test buttons go OUTSIDE the board grid -->
@@ -76,3 +60,7 @@
         Test Loss Page
     </a>
 </div>
+
+@section Scripts {
+    <script src="~/js/minesweeper.js"></script>
+}

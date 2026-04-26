@@ -498,6 +498,53 @@ namespace MinesweeperApp.Controllers
             // Return the calculated final score.
             return revealedCells * difficultyMultiplier * 10;
         }
+
+        // ================================
+        // AJAX CELL CLICK (POST) Angela
+        // ================================
+
+        // Added by Angela: handles AJAX left-click updates for one Minesweeper cell.
+        // This keeps the page from doing a full reload.
+        [HttpPost]
+        public IActionResult AjaxCellClick(int row, int col, int boardSize, string difficulty)
+        {
+            // Make sure the user is logged in before allowing game actions.
+            string username = HttpContext.Session.GetString("Username");
+
+            if (string.IsNullOrEmpty(username))
+            {
+                // Added by Angela: tells JavaScript the user needs to go back to login.
+                return Json(new { redirectUrl = Url.Action("Login", "User") });
+            }
+
+            // Get the current game board from session.
+            Board board = GetBoardFromSession();
+
+            if (board == null)
+            {
+                // Added by Angela: if session is missing, reload the game page.
+                return Json(new { redirectUrl = Url.Action("Game", "User", new { boardSize, difficulty }) });
+            }
+
+            // Jacob TODO: later this reveal logic should move into GameService for Milestone 3.
+            if (!board.GameOver)
+            {
+                board.RevealCell(row, col);
+            }
+
+            // Save updated board back to session.
+            SaveBoardToSession(board);
+
+            // Build the updated ViewModel so the partial cell has the latest value.
+            GameBoardViewModel model = BuildViewModel(board, difficulty);
+
+            // Added by Angela: tells the partial which exact cell to redraw.
+            ViewData["Row"] = row;
+            ViewData["Col"] = col;
+
+            // Added by Angela: returns only one cell partial, not the whole Game page.
+            return PartialView("_CellPartial", model);
+        }
     }
 }
 
