@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MinesweeperApp.Models;
+using MinesweeperApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,8 @@ builder.Services.AddControllersWithViews();
 // Add the database context and tell it to use SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IGameService, GameService>();
 
 // Add session services so the app can remember logged in users
 builder.Services.AddDistributedMemoryCache();
@@ -50,3 +53,4 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.Run();
+
