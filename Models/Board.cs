@@ -173,26 +173,72 @@ namespace MinesweeperApp.Models
         /// <summary>
         /// Determines whether all non-mine cells have been revealed and updates the game state
         /// </summary>
-        private void CheckWin()
+        public void CheckWin()
         {
-            // Loop through each row
             for (int r = 0; r < Rows; r++)
             {
-                // Loop through each column
                 for (int c = 0; c < Cols; c++)
                 {
-                    // Get the cell at the current row and column
                     Cell cell = Grid[r][c];
-                    // If the cell is not a mine and has not been revealed, the player has not won yet, so return
+
                     if (!cell.IsMine && !cell.IsRevealed)
                     {
+                        Win = false;
                         return;
                     }
                 }
             }
-            // Update the game state
-            Win = true;
+
             GameOver = true;
+            Win = true;
+        }
+
+        /// <summary>
+        /// Toggle the flag bool
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="col"></param>
+        public void ToggleFlag(int row, int col)
+        {
+            Cell cell = Grid[row][col];
+
+            if (GameOver || cell.IsRevealed)
+            {
+                return;
+            }
+
+            cell.IsFlagged = !cell.IsFlagged;
+        }
+
+        /// <summary>
+        /// Reveal all neighbors that do not have flags and aren't touching a bomb
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="col"></param>
+        private void RevealEmptyNeighbors(int row, int col)
+        {
+            for (int r = row - 1; r <= row + 1; r++)
+            {
+                for (int c = col - 1; c <= col + 1; c++)
+                {
+                    if (r < 0 || r >= Rows || c < 0 || c >= Cols)
+                    {
+                        continue;
+                    }
+
+                    Cell neighbor = Grid[r][c];
+
+                    if (!neighbor.IsRevealed && !neighbor.IsMine && !neighbor.IsFlagged)
+                    {
+                        neighbor.IsRevealed = true;
+
+                        if (neighbor.AdjacentMines == 0)
+                        {
+                            RevealEmptyNeighbors(r, c);
+                        }
+                    }
+                }
+            }
         }
     }
 }
