@@ -3,6 +3,7 @@ using MinesweeperApp.Models;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
+using MinesweeperApp.Services;
 
 
 namespace MinesweeperApp.Controllers
@@ -10,11 +11,13 @@ namespace MinesweeperApp.Controllers
     public class UserController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IGameService _gameService;
 
         // Constructor - inject database context
-        public UserController(ApplicationDbContext context)
+        public UserController(ApplicationDbContext context, IGameService gameService)
         {
             _context = context;
+            _gameService = gameService;
         }
 
         // =========================
@@ -218,13 +221,13 @@ namespace MinesweeperApp.Controllers
             if (board == null)
             {
                 // TODO: Jacob - The GetMineCount method is a placeholder. The actual number of mines should be determined by the difficulty level and board size.
-                int mines = GetMineCount(boardSize, difficulty);
+                int mines = _gameService.GetMineCount(boardSize, difficulty);
                 board = new Board(boardSize, boardSize, mines);
 
                 SaveBoardToSession(board);
             }
 
-            GameBoardViewModel model = BuildViewModel(board, difficulty);
+            GameBoardViewModel model = _gameService.BuildViewModel(board, difficulty);
 
             return View(model);
         }
@@ -279,20 +282,9 @@ namespace MinesweeperApp.Controllers
                     // Get the username of the user
                     username = HttpContext.Session.GetString("Username") ?? string.Empty;
                     // Set a score variable to the calculated score
-                    int score = CalculateScore(board, difficulty);
-                    // Create a new GameScore object with the relevant information and save it to the database.
-                    GameScore gameScore = new GameScore
-                    {
-                        Username = username,
-                        BoardSize = board.Rows,
-                        Difficulty = difficulty ?? string.Empty,
-                        Score = score,
-                        DatePlayed = DateTime.Now
-                    };
-                    // Save the game score to the database
-                    _context.GameScores.Add(gameScore);
-                    _context.SaveChanges();
-                    // Redirect to the Win page and pass the score as a parameter to display it on the win screen.
+                    int score = _gameService.CalculateScore(board, difficulty);
+                    _gameService.SaveGameScore(username, board, difficulty);
+
                     return RedirectToAction("Win", new { score = score });
                 }
                 else
@@ -302,7 +294,7 @@ namespace MinesweeperApp.Controllers
                 }
             }
             // If the game is not over, just reload the game page with the updated board.
-            GameBoardViewModel model = BuildViewModel(board, difficulty);
+            GameBoardViewModel model = _gameService.BuildViewModel(board, difficulty);
             // The Game view will use the model to render the current state of the board, including revealed cells, remaining mines, etc.
             return View("Game", model);
         }
@@ -358,83 +350,6 @@ namespace MinesweeperApp.Controllers
         }
 
         /// <summary>
-        /// Calculates the number of mines to place on a minesweeper board based on the selected difficulty level and board size. This is a placeholder method and can be adjusted to use more specific rules for mine placement.
-        /// </summary>
-        /// <param name="boardSize"></param>
-        /// <param name="difficulty"></param>
-        /// <returns></returns>
-        private int GetMineCount(int boardSize, string difficulty)
-        {
-            // Switch case to determine mine count based on difficulty.
-            switch (difficulty.ToLower())
-            {
-                // In case of "easy", we place mines on 10% of the board.
-                case "easy":
-                    return (int)(boardSize * boardSize * 0.1);
-                // In case of "medium", we place mines on 15% of the board.
-                case "medium":
-                    return (int)(boardSize * boardSize * 0.15);
-                // In case of "hard", we place mines on 25% of the board.
-                case "hard":
-                    return (int)(boardSize * boardSize * 0.25);
-                // As a default, we add mines to 15% of the board.
-                default:
-                    return (int)(boardSize * boardSize * 0.15);
-            }
-        }
-
-        /// <summary>
-        /// Build the view model for the game board based on the current state of the board and the selected difficulty.
-        /// </summary>
-        /// <param name="board"></param>
-        /// <param name="difficulty"></param>
-        /// <returns></returns>
-        private GameBoardViewModel BuildViewModel(Board board, string difficulty)
-        {
-            // A list of cells to be rendered on the game board.
-            List<string> cells = new List<string>();
-            // Loop through each row in the board's grid
-            for (int r = 0; r < board.Rows; r++)
-            {
-                // For each row, loop through the columns and check the state of each cell.
-                for (int c = 0; c < board.Cols; c++)
-                {
-                    // Get the current cell from the board's grid
-                    var cell = board.Grid[r][c];
-                    // Determine what to display for this cell based on whether it's revealed, if it's a mine, and how many adjacent mines it has.
-                    if (!cell.IsRevealed)
-                    {
-                        // Add a placeholder for unrevealed cells.
-                        cells.Add("■");
-                    }
-                    else if (cell.IsMine)
-                    {
-                        // Add a bomb emoji for revealed mines.
-                        cells.Add("💣");
-                    }
-                    else if (cell.AdjacentMines > 0)
-                    {
-                        // Add the number of adjacent mines for revealed cells that are not mines.
-                        cells.Add(cell.AdjacentMines.ToString());
-                    }
-                    else
-                    {
-                        // Add an empty string for revealed cells with no adjacent mines.
-                        cells.Add("");
-                    }
-                }
-            }
-            // Create and return the view model with the current board state and settings.
-            return new GameBoardViewModel
-            {
-                BoardSize = board.Rows,
-                Difficulty = difficulty,
-                Cells = cells,
-                Board = board
-            };
-        }
-
-        /// <summary>
         /// Save the current game session
         /// </summary>
         /// <param name="board"></param>
@@ -461,42 +376,40 @@ namespace MinesweeperApp.Controllers
         }
 
         /// <summary>
-        /// Calculate the score for the game based on the number of revealed cells, the difficulty level, and the size of the board. This is a simple scoring algorithm that can be adjusted to better fit the desired gameplay experience.
+        /// IActionResult method that toggles the flag
         /// </summary>
-        /// <param name="board"></param>
+        /// <param name="row"></param>
+        /// <param name="col"></param>
+        /// <param name="boardSize"></param>
         /// <param name="difficulty"></param>
         /// <returns></returns>
-        private int CalculateScore(Board board, string difficulty)
+        [HttpPost]
+        public IActionResult AjaxToggleFlag(int row, int col, int boardSize, string difficulty)
         {
-            // Base score is determined by the total number of cells on the board.
-            int baseScore = board.Rows * board.Cols;
-            // Difficulty multiplier increases the score based on the selected difficulty level.
-            int difficultyMultiplier = difficulty.ToLower() switch
+            string username = HttpContext.Session.GetString("Username");
+
+            if (string.IsNullOrEmpty(username))
             {
-                "easy" => 1,
-                "medium" => 2,
-                "hard" => 3,
-                _ => 1
-            };
-            // Count the number of cells that have been revealed and are not mines. This rewards players for successfully revealing safe cells.
-            int revealedCells = 0;
-            // Loop through each row
-            for (int r = 0; r < board.Rows; r++)
-            {
-                // Loop through each column in the current row
-                for (int c = 0; c < board.Cols; c++)
-                {
-                    // Get the current cell from the board's grid
-                    Cell cell = board.Grid[r][c];
-                    // If the cell is revealed and not a mine, increment the count of revealed cells.
-                    if (cell.IsRevealed && !cell.IsMine)
-                    {
-                        revealedCells++;
-                    }
-                }
+                return Json(new { redirectUrl = Url.Action("Login", "User") });
             }
-            // Return the calculated final score.
-            return revealedCells * difficultyMultiplier * 10;
+
+            Board board = GetBoardFromSession();
+
+            if (board == null)
+            {
+                return Json(new { redirectUrl = Url.Action("Game", "User", new { boardSize, difficulty }) });
+            }
+
+            board.ToggleFlag(row, col);
+
+            SaveBoardToSession(board);
+
+            GameBoardViewModel model = _gameService.BuildViewModel(board, difficulty);
+
+            ViewData["Row"] = row;
+            ViewData["Col"] = col;
+
+            return PartialView("_CellPartial", model);
         }
 
         // ================================
@@ -535,16 +448,33 @@ namespace MinesweeperApp.Controllers
             // Save updated board back to session.
             SaveBoardToSession(board);
 
+            // Handle game ending events (Jacob)
+            if (board.GameOver)
+            {
+                if (board.Win)
+                {
+                    int score = _gameService.CalculateScore(board, difficulty);
+                    _gameService.SaveGameScore(username, board, difficulty);
+
+                    return Json(new
+                    {
+                        redirectUrl = Url.Action("Win", "User", new { score = score })
+                    });
+                }
+
+                return Json(new
+                {
+                    redirectUrl = Url.Action("Loss", "User")
+                });
+            }
+
             // Build the updated ViewModel so the partial cell has the latest value.
-            GameBoardViewModel model = BuildViewModel(board, difficulty);
+            GameBoardViewModel model = _gameService.BuildViewModel(board, difficulty);
 
-            // Added by Angela: tells the partial which exact cell to redraw.
-            ViewData["Row"] = row;
-            ViewData["Col"] = col;
-
-            // Added by Angela: returns only one cell partial, not the whole Game page.
-            return PartialView("_CellPartial", model);
+            // Updated by Jacob: return the _BoardPartial to allow for all adjacent empty cells to be revealed after click
+            return PartialView("_BoardPartial", model);
         }
     }
 }
+
 
