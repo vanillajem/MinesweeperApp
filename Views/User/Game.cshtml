@@ -1,4 +1,4 @@
-﻿@model MinesweeperApp.Models.GameBoardViewModel
+@model MinesweeperApp.Models.GameBoardViewModel
 
 @{
     ViewData["Title"] = "Game Board";
@@ -33,21 +33,8 @@
     The current board state is stored in the ViewModel.
 -->
 <div style="display:grid; grid-template-columns: repeat(@Model.BoardSize, 60px); gap: 5px; margin-top: 20px;">
-    @for (int row = 0; row < Model.BoardSize; row++)
-
-    
-        @for (int col = 0; col < Model.BoardSize; col++)
-        {
-         
-            @* Updated by Angela: sends row/column info to the cell partial. *@
-            ViewData["Row"] = row;
-            ViewData["Col"] = col;
-
-            @* Updated by Angela: renders one cell partial so AJAX can replace one cell only. *@
-            <partial name="_CellPartial" model="Model" />
-        
-        }
-    
+    @* Updated by Jacob to allow Ajax to reveal all adjacent empty cells *@
+    <partial name="_BoardPartial" model="Model" />
 </div>
 <!-- Board grid ends here -->
 <!-- Test buttons go OUTSIDE the board grid -->
