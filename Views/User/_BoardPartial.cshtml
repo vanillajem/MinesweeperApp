@@ -1,0 +1,16 @@
+﻿@model MinesweeperApp.Models.GameBoardViewModel
+
+<div id="game-board"
+     style="display:grid; grid-template-columns: repeat(@Model.BoardSize, 60px); gap: 5px; margin-top: 20px;">
+
+    @for (int row = 0; row < Model.BoardSize; row++)
+    {
+        for (int col = 0; col < Model.BoardSize; col++)
+        {
+            ViewData["Row"] = row;
+            ViewData["Col"] = col;
+
+            <partial name="_CellPartial" model="Model" />
+        }
+    }
+</div>
