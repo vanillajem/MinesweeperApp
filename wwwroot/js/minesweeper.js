@@ -33,9 +33,12 @@ $(document).ready(function () {
                 difficulty: difficulty
             },
             success: function (result) {
-                console.log("AJAX success");
-
-                $("#cell-" + row + "-" + col).replaceWith(result);
+                if (result.redirectUrl) {
+                    window.location.href = result.redirectUrl;
+                    return;
+                }
+                // Updated by Jacob to allow all adjacent cells to be revealed
+                $("#game-board").replaceWith(result);
                 $("#timestamp").text("Last Updated: " + new Date().toLocaleTimeString());
             },
             error: function (xhr, status, error) {
@@ -47,22 +50,42 @@ $(document).ready(function () {
         });
     });
 
-    // RIGHT CLICK - flag
+    // RIGHT CLICK - AJAX flag
     $(document).on("contextmenu", ".cell-button", function (event) {
         event.preventDefault();
 
         let button = $(this);
-        let isFlagged = button.attr("data-flagged") === "true";
 
-        if (isFlagged) {
-            button.attr("data-flagged", "false");
-            button.text("■");
-        } else {
-            button.attr("data-flagged", "true");
-            button.text("🚩");
-        }
+        let row = button.data("row");
+        let col = button.data("col");
+        let boardSize = button.data("board-size");
+        let difficulty = button.data("difficulty");
 
-        $("#timestamp").text("Last Updated: " + new Date().toLocaleTimeString());
+        $.ajax({
+            url: "/User/AjaxToggleFlag",
+            type: "POST",
+            data: {
+                row: row,
+                col: col,
+                boardSize: boardSize,
+                difficulty: difficulty
+            },
+            success: function (result) {
+                if (result.redirectUrl) {
+                    window.location.href = result.redirectUrl;
+                    return;
+                }
+
+                $("#cell-" + row + "-" + col).replaceWith(result);
+                $("#timestamp").text("Last Updated: " + new Date().toLocaleTimeString());
+            },
+            error: function (xhr, status, error) {
+                console.error("Flag AJAX failed");
+                console.error("Status:", status);
+                console.error("Error:", error);
+                console.error("Response:", xhr.responseText);
+            }
+        });
     });
 
 });
