@@ -1,0 +1,57 @@
+@model List<MinesweeperApp.Models.SavedGameViewModel>
+
+@{
+    ViewData["Title"] = "Saved Games";
+}
+
+<h1>Saved Games</h1>
+<h4>Milestone 4 Game Progress</h4>
+<hr />
+
+@if (TempData["Milestone4Message"] != null)
+{
+    <div class="alert alert-warning">
+        @TempData["Milestone4Message"]
+    </div>
+}
+
+@* Added by Angela: saved-games table layout for the player-facing Milestone 4 screen. *@
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Date Saved</th>
+            <th>Board Size</th>
+            <th>Difficulty</th>
+            <th class="text-end">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var game in Model)
+        {
+            <tr>
+                <td>@game.DateSaved</td>
+                <td>@game.BoardSize</td>
+                <td>@game.Difficulty</td>
+                <td class="text-end">
+                    <form asp-controller="User" asp-action="LoadSavedGamePlaceholder" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@game.Id" />
+                        <button type="submit" class="btn btn-success btn-sm">Load</button>
+                    </form>
+
+                    <form asp-controller="User" asp-action="DeleteSavedGamePlaceholder" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@game.Id" />
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@* TODO Jacob: connect Load and Delete buttons to the database/API once saved game records exist. *@
+
+<a asp-controller="User" asp-action="StartGame" class="btn btn-outline-secondary">
+    Back to Start Game
+</a>

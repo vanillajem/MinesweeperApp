@@ -14,6 +14,27 @@
     <strong>Difficulty:</strong> @Model.Difficulty
 </div>
 
+@if (TempData["Milestone4Message"] != null)
+{
+    <div class="alert alert-warning">
+        @TempData["Milestone4Message"]
+    </div>
+}
+
+@* Added by Angela: Milestone 4 frontend controls for saving and viewing saved games. *@
+<div class="mb-3">
+    <form asp-controller="User" asp-action="SaveGamePlaceholder" method="post" class="d-inline">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="boardSize" value="@Model.BoardSize" />
+        <input type="hidden" name="difficulty" value="@Model.Difficulty" />
+        <button type="submit" class="btn btn-primary me-2">Save Game</button>
+    </form>
+
+    <a asp-controller="User" asp-action="ShowSavedGames" class="btn btn-outline-secondary">
+        Show Saved Games
+    </a>
+</div>
+
 @if (Model.ClickedRow != null && Model.ClickedCol != null)
 {
     <div class="alert alert-secondary">

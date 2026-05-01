@@ -44,5 +44,9 @@
     -->
     <div class="form-group">
         <input type="submit" value="Start New Game" class="btn btn-primary" />
+        @* Added by Angela: gives users a way to open the Milestone 4 saved games screen. *@
+        <a asp-controller="User" asp-action="ShowSavedGames" class="btn btn-outline-secondary ms-2">
+            Show Saved Games
+        </a>
     </div>
 </form>
