@@ -23,7 +23,7 @@
 
 @* Added by Angela: Milestone 4 frontend controls for saving and viewing saved games. *@
 <div class="mb-3">
-    <form asp-controller="User" asp-action="SaveGamePlaceholder" method="post" class="d-inline">
+    <form asp-controller="User" asp-action="SaveGame" method="post" class="d-inline">
         @Html.AntiForgeryToken()
         <input type="hidden" name="boardSize" value="@Model.BoardSize" />
         <input type="hidden" name="difficulty" value="@Model.Difficulty" />
@@ -59,6 +59,8 @@
 </div>
 <!-- Board grid ends here -->
 <!-- Test buttons go OUTSIDE the board grid -->
+
+@* REMOVE THE TEST BUTTONS FOR FINAL PRODUCT
 <div class="mt-4">
     <a asp-controller="User" asp-action="Win" asp-route-score="150" class="btn btn-success me-2">
         Test Win Page
@@ -68,6 +70,7 @@
         Test Loss Page
     </a>
 </div>
+*@
 
 @section Scripts {
     <script src="~/js/minesweeper.js"></script>

@@ -1,4 +1,4 @@
-@model List<MinesweeperApp.Models.SavedGameViewModel>
+@model List<MinesweeperApp.Models.SavedGameModel>
 
 @{
     ViewData["Title"] = "Saved Games";
@@ -29,17 +29,17 @@
         @foreach (var game in Model)
         {
             <tr>
-                <td>@game.DateSaved</td>
-                <td>@game.BoardSize</td>
+                <td>@game.DateSaved.ToString("MM/dd/yyyy hh:mm tt")</td>
+                <td>@game.BoardSize x @game.BoardSize</td>
                 <td>@game.Difficulty</td>
                 <td class="text-end">
-                    <form asp-controller="User" asp-action="LoadSavedGamePlaceholder" method="post" class="d-inline">
+                    <form asp-controller="User" asp-action="LoadSavedGame" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@game.Id" />
                         <button type="submit" class="btn btn-success btn-sm">Load</button>
                     </form>
 
-                    <form asp-controller="User" asp-action="DeleteSavedGamePlaceholder" method="post" class="d-inline">
+                    <form asp-controller="User" asp-action="DeleteSavedGame" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@game.Id" />
                         <button type="submit" class="btn btn-danger btn-sm">Delete</button>
@@ -50,7 +50,7 @@
     </tbody>
 </table>
 
-@* TODO Jacob: connect Load and Delete buttons to the database/API once saved game records exist. *@
+@* Load and Delete buttons now post the selected saved game Id to the UserController *@
 
 <a asp-controller="User" asp-action="StartGame" class="btn btn-outline-secondary">
     Back to Start Game
