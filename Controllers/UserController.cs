@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using MinesweeperApp.Models;
-using System.Linq;
-using Microsoft.AspNetCore.Http;
-using System.Linq;
 using MinesweeperApp.Services;
+using System.Linq;
+using System.Linq;
 
 
 namespace MinesweeperApp.Controllers
@@ -350,11 +351,18 @@ namespace MinesweeperApp.Controllers
         }
 
         // =========================
-        // SAVE GAME PLACEHOLDER (POST) Angela
+        // SAVE GAME (POST) Jacob
         // =========================
+
+        /// <summary>
+        /// Action method to save the game to the database
+        /// </summary>
+        /// <param name="boardSize"></param>
+        /// <param name="difficulty"></param>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult SaveGamePlaceholder(int boardSize, string difficulty)
+        public IActionResult SaveGame(int boardSize, string difficulty)
         {
             string username = HttpContext.Session.GetString("Username");
 
@@ -363,16 +371,40 @@ namespace MinesweeperApp.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Added by Angela: this keeps the Save Game button working until Jacob connects the database save logic.
-            // TODO Jacob: serialize the current Board from session and save it to the Games table.
-            TempData["Milestone4Message"] = "Save Game button clicked. Jacob will connect this to the database/API.";
+            Board board = GetBoardFromSession();
+
+            if (board == null)
+            {
+                TempData["Milestone4Message"] = "No active game found to save.";
+                return RedirectToAction("Game", new { boardSize, difficulty });
+            }
+
+            string boardJson = System.Text.Json.JsonSerializer.Serialize(board);
+
+            SavedGameModel savedGame = new SavedGameModel
+            {
+                Username = username,
+                DateSaved = DateTime.Now,
+                BoardSize = boardSize,
+                Difficulty = difficulty,
+                BoardJson = boardJson
+            };
+
+            _context.Games.Add(savedGame);
+            _context.SaveChanges();
+
+            TempData["Milestone4Message"] = "Game saved successfully.";
 
             return RedirectToAction("Game", new { boardSize, difficulty });
         }
 
         // =========================
-        // SHOW SAVED GAMES PLACEHOLDER (GET) Angela
+        // SHOW SAVED GAMES (GET) Jacob
         // =========================
+        /// <summary>
+        /// Show the games that have been saved by the currently logged in user
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public IActionResult ShowSavedGames()
         {
@@ -383,45 +415,89 @@ namespace MinesweeperApp.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Added by Angela: temporary sample row so the saved-games page layout can be viewed before Jacob adds the API/database.
-            // TODO Jacob: replace this list with saved games loaded from the Games table.
-            List<SavedGameViewModel> savedGames = new List<SavedGameViewModel>
-            {
-                new SavedGameViewModel
+            List<SavedGameModel> savedGames = _context.Games
+                .Where(g => g.Username == username)
+                .OrderByDescending(g => g.DateSaved)
+                .Select(g => new SavedGameModel
                 {
-                    Id = 1,
-                    DateSaved = "Sample saved game",
-                    BoardSize = "8 x 8",
-                    Difficulty = "Medium"
-                }
-            };
+                    Id = g.Id,
+                    Username = g.Username,
+                    DateSaved = g.DateSaved,     // ✅ keep as DateTime
+                    BoardSize = g.BoardSize,     // ✅ keep as int
+                    Difficulty = g.Difficulty,
+                    BoardJson = g.BoardJson
+                })
+                .ToList();
 
             return View(savedGames);
         }
 
         // =========================
-        // LOAD SAVED GAME PLACEHOLDER (POST) Angela
+        // LOAD SAVED GAME (POST) Jacob
         // =========================
+        /// <summary>
+        /// Load the games that have been saved by the currently logged in user
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult LoadSavedGamePlaceholder(int id)
+        public IActionResult LoadSavedGame(int id)
         {
-            // Added by Angela: placeholder keeps the Load button from breaking before Jacob adds restore logic.
-            // TODO Jacob: load the selected saved game, deserialize the board JSON, and put it back into session.
-            TempData["Milestone4Message"] = "Load button clicked. Jacob will connect this to restore saved game data.";
-            return RedirectToAction("ShowSavedGames");
+            string username = HttpContext.Session.GetString("Username");
+
+            if (string.IsNullOrEmpty(username))
+            {
+                return RedirectToAction("Login");
+            }
+
+            SavedGameModel savedGame = _context.Games
+                .FirstOrDefault(g => g.Id == id && g.Username == username);
+
+            if (savedGame == null)
+            {
+                TempData["Milestone4Message"] = "Saved game not found.";
+                return RedirectToAction("ShowSavedGames");
+            }
+
+            HttpContext.Session.SetString("Board", savedGame.BoardJson);
+
+            return RedirectToAction("Game", new
+            {
+                boardSize = savedGame.BoardSize,
+                difficulty = savedGame.Difficulty
+            });
         }
 
         // =========================
-        // DELETE SAVED GAME PLACEHOLDER (POST) Angela
+        // DELETE SAVED GAME (POST) Jacob
         // =========================
+        /// <summary>
+        /// Deletes the saved game associated with the specified identifier for the currently logged-in user
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteSavedGamePlaceholder(int id)
+        public IActionResult DeleteSavedGame(int id)
         {
-            // Added by Angela: placeholder keeps the Delete button from breaking before Jacob adds delete logic.
-            // TODO Jacob: delete the selected saved game from the Games table or REST API endpoint.
-            TempData["Milestone4Message"] = "Delete button clicked. Jacob will connect this to remove saved game data.";
+            string username = HttpContext.Session.GetString("Username");
+
+            if (string.IsNullOrEmpty(username))
+            {
+                return RedirectToAction("Login");
+            }
+
+            SavedGameModel savedGame = _context.Games
+                .FirstOrDefault(g => g.Id == id && g.Username == username);
+
+            if (savedGame != null)
+            {
+                _context.Games.Remove(savedGame);
+                _context.SaveChanges();
+                TempData["Milestone4Message"] = "Saved game deleted.";
+            }
+
             return RedirectToAction("ShowSavedGames");
         }
 

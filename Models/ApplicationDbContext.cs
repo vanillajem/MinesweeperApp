@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace MinesweeperApp.Models
 {
@@ -16,5 +17,6 @@ namespace MinesweeperApp.Models
         public DbSet<UserModel> Users { get; set; }
         // This will become the GameScores table in the database
         public DbSet<GameScore> GameScores { get; set; }
+        public DbSet<SavedGameModel> Games { get; set; }
     }
 }
